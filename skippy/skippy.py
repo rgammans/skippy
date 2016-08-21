@@ -74,7 +74,7 @@ def skip32(key, buf, encrypt):
                   wl >> 8, wl & 0xFF ]] )
 
 
-class Skippy:
+class Skippy(object):
     def __init__(self, key):
         if len(key) < 10:
             raise ValueError("key must be at least 10 bytes in length")
