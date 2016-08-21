@@ -1,7 +1,8 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 # vim:fenc=utf-8:ts=8:et:sw=4:sts=4:tw=79
 
 import struct
+import six
 
 FTABLE = (0xa3, 0xd7, 0x09, 0x83, 0xf8, 0x48, 0xf6, 0xf4,
           0xb3, 0x21, 0x15, 0x78, 0x99, 0xb1, 0xaf, 0xf9,
@@ -57,8 +58,8 @@ def skip32(key, buf, encrypt):
         k, step = 23, -1
 
     # pack into words
-    wl = (buf[0] << 8) + buf[1]
-    wr = (buf[2] << 8) + buf[3]
+    wl = (six.indexbytes(buf,0) << 8) + six.indexbytes(buf,1)
+    wr = (six.indexbytes(buf,2) << 8) + six.indexbytes(buf,3)
 
     # 24 feistel rounds, doubled up
     for _ in range(12):
@@ -68,15 +69,16 @@ def skip32(key, buf, encrypt):
         k += step
 
     # implicitly swap halves while unpacking
-    return bytes((wr >> 8, wr & 0xFF,
-                  wl >> 8, wl & 0xFF))
+    return b''.join([six.int2byte(i) for i in
+                 [wr >> 8, wr & 0xFF,
+                  wl >> 8, wl & 0xFF ]] )
 
 
 class Skippy:
     def __init__(self, key):
         if len(key) < 10:
             raise ValueError("key must be at least 10 bytes in length")
-        self._key = key
+        self._key = list(six.iterbytes(key))
 
     def encrypt(self, value):
         buf = struct.pack("=I", value)
